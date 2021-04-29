@@ -232,6 +232,21 @@ questtot = questtot.merge(quest9,how='outer',on='col_names')
 questtot = questtot.merge(quest11,how='outer',on='col_names')
 questtot = questtot.merge(quest13,how='outer',on='col_names')
 
+
+questtot["T_PRESENCE_NUM"]=questtot["ID4"].notna()*1+questtot["ID7"].notna()*1+questtot["ID9"].notna()*1+questtot["ID11"].notna()*1+questtot["ID13"].notna()*1
+
+questtot.ID4[questtot.ID4.isna()] = " "
+questtot.ID7[questtot.ID7.isna()] = " "
+questtot.ID9[questtot.ID9.isna()] = " "
+questtot.ID11[questtot.ID11.isna()] = " "
+questtot.ID13[questtot.ID13.isna()] = " "
+questtot["T_PRESENCE"]=questtot["ID4"]+"_"+questtot["ID7"]+"_"+questtot["ID9"]+"_"+questtot["ID11"]+"_"+questtot["ID13"]
+
+
+temp = pd.read_csv("C:/0 - Data/Statut.csv",sep=';')
+questtot = questtot.merge(temp,how='left',on='col_names')
+
+
 ############################################################################
 # Nettoyage suite à une analyse manuelle de questtot
 
@@ -445,11 +460,80 @@ df7=df7.drop(["TEMP"],axis=1)
 
 ############################################################################
 # Rassemblement des données des questionnaires (df)
-# ICI ça buge
 df_final = pd.concat([df4,df7],ignore_index=True)
 df_final = pd.concat([df_final,df9],ignore_index=True)
 df_final = pd.concat([df_final,df11],ignore_index=True)
 df_final = pd.concat([df_final,df13],ignore_index=True)
+
+
+#import warnings
+#warnings.filterwarnings("ignore")
+
+df_final2=df_final.copy()
+df_final2['FCS_BIN']=df_final2['FCS']
+df_final2.FCS_BIN[df_final2['FCS_BIN']<=42] = 1  
+df_final2.FCS_BIN[df_final2['FCS_BIN']>42] = 0  
+#ça ne marche pas 
+
+
+# Tx IA : (nombre de ménage avec SCA < 42) / (nombre de ménages de ladite localité)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+List_drop=['OPERAT','QUEST','IDENT','NUMEN','DATE_JOUR','DATE_MOIS','DATE_ANN_E',
+           'CODE_ENQ','CODE_CONT','AG_SAISIE','JOUR_SAISIE','MOIS_SAISIE','ANNEE_SAISIE',
+           'Q3_1','Q3_2','Q3_3','Q3_4','Q3_5','Q3_6','Q3_7','Q3_8','Q3_9','Q3_10','Q3_11',
+           'Q3_12','Q3_13','Q3_14','Q3_15','Q11_12','Q11_13','Q11_14','FAC1_1','FAC2_1',
+           'NFAC1_1','FAC1_2','FAC2_2','FAC3_2','NTI001','FAC1_3','FAC2_3','NTI002','FAC1_4',
+           'FAC2_4','NTI003','PER.SOURCE10','ID01','ID02','CLUSTER','SAISIE','CLUSTER2','SELECT',
+           'NUMDR','CODE_CE','EVO_BOV','EVO_OV','EVO_CAP','EVO_CAM','FILTER_$','SUM_SORG',
+           'SUM_CEREALES1','SECTION1','NORDRE','SUBSCRIBERID','CODEKIP','SECTION2','SECTION4',
+           'VARIZ1','VARIZ2','VARIZ3','VARIZ4','SECTION5','Q5_0C','VERIF2','VERIF3','VERIF4',
+           'VERIF5','VERIF6','Q5_6','Q5_7','SECTION6','SECTION7','SECTION8','VER_ADBASE1',
+           'VER_ADBASE2','VER_PULSES','VER_LEGUMES','VER_FRUIT','VER_PROTSMALL_N','VER_PROTSMALL',
+           'VER_VIANDPOISS_N','VER_VIANDPOISS','VER_SMALLAI_N','VER_SMALLAI','VER_LAITIERS_N',
+           'VER_LAITIERS','VER_SUCRE','VER_HUILE','VER_OTHER','SECTION9',
+           'CHOCS1GENERATED_TABLE_LIST_LABEL_301','CHOCS1RESERVED_NAME_FOR_FIELD_LIST_LABELS_302',
+           'CHOCS2GENERATED_TABLE_LIST_LABEL_311','CHOCS2RESERVED_NAME_FOR_FIELD_LIST_LABELS_312',
+           'SECTION10','STRATEG1GENERATED_TABLE_LIST_LABEL_322','STRATNAL1GENERATED_TABLE_LIST_LABEL_329',
+           'STRATNAL1RESERVED_NAME_FOR_FIELD_LIST_LABELS_330','STRATNAL2GENERATED_TABLE_LIST_LABEL_340',
+           'STRATNAL2RESERVED_NAME_FOR_FIELD_LIST_LABELS_341','SECTION11',
+           'Q11AGENERATED_TABLE_LIST_LABEL_353','Q11ARESERVED_NAME_FOR_FIELD_LIST_LABELS_354',
+           'Q11BGENERATED_TABLE_LIST_LABEL_361','Q11BRESERVED_NAME_FOR_FIELD_LIST_LABELS_362',
+           'KEY','COPING7','COPING8','COPING9','COPING10','COPING11','COPING12','COPING13','COPING14',
+           'COPING15','COPING16','COPING17','COPING18','COPING19','COPING20','COPING21','COPING22',
+           'COPING23','COPING24','COPING_STRATEGY','CLASS_PCDEPALIM','COPING_CAPA','CLASS_FS','FS_CLASSIF',
+           'DEVICEID','FSMS_JUIN14','STRATEG1GENERATED_TABLE_LIST_LABEL_330',
+           'STRATNAL1GENERATED_TABLE_LIST_LABEL_337','STRATNAL1RESERVED_NAME_FOR_FIELD_LIST_LABELS_338',
+           'Q11AGENERATED_TABLE_LIST_LABEL_361','Q11ARESERVED_NAME_FOR_FIELD_LIST_LABELS_362','Q5_0B1',
+           'Q7_17','SECTION8BIS','SECTIONXX']
+df_final=df_final.drop(List_drop,axis=1)
+'''
 
 
 
