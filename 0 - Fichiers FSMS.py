@@ -112,6 +112,12 @@ df9.columns = [Lst_NomCol_df9]
 df11.columns = [Lst_NomCol_df11]
 df13.columns = [Lst_NomCol_df13]
 
+df4.columns = ['/'.join(x) for x in df4.columns.values]
+df7.columns = ['/'.join(x) for x in df7.columns.values]
+df9.columns = ['/'.join(x) for x in df9.columns.values]
+df11.columns = ['/'.join(x) for x in df11.columns.values]
+df13.columns = ['/'.join(x) for x in df13.columns.values]
+
 # nettoyage
 del Lst_NomCol_df4,Lst_NomCol_df7,Lst_NomCol_df9,Lst_NomCol_df11,Lst_NomCol_df13
 
@@ -465,41 +471,15 @@ df_final = pd.concat([df_final,df9],ignore_index=True)
 df_final = pd.concat([df_final,df11],ignore_index=True)
 df_final = pd.concat([df_final,df13],ignore_index=True)
 
-
-#import warnings
-#warnings.filterwarnings("ignore")
-
+# Les noms de colonne sont des multiindex car qui pose pb
 df_final2=df_final.copy()
-df_final2['FCS_BIN']=df_final2['FCS']
-df_final2.FCS_BIN[df_final2['FCS_BIN']<=42] = 1  
-df_final2.FCS_BIN[df_final2['FCS_BIN']>42] = 0  
-#ça ne marche pas 
+
+df_final2['FCS_BIN']=0
+a=df_final2.columns
+df_final2.loc[df_final2.loc[:,'FCS']<=42,'FCS_BIN']= 1 
 
 
 # Tx IA : (nombre de ménage avec SCA < 42) / (nombre de ménages de ladite localité)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
