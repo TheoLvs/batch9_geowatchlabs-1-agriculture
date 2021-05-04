@@ -1,11 +1,16 @@
 ###########################################################################
+# Ce que fait ce programme
+# Importe les fichiers cartes (Crop Mask + Hist Yield) dans des listes
+# Croise les cartes avec les données ménages pour ajouter le rendement pour chaque ménage
+
+###########################################################################
 # Librairies
 
 import os
-import FichiersFSMS as fs
 os.chdir(r'C:\Users\lebce\OneDrive\Documents\DataForGood')
 print(os.getcwd())
 
+import FichiersFSMS as fs
 import pandas as pd
 #import unicodedata
 import geopandas as gpd                 
@@ -98,6 +103,7 @@ del List_drop
 # chargement de la base des ménages
 
 df_analyse=fs.df_analyse.copy()
+#df_analyse=fs.df_analyse.loc[df_analyse.NUMQUEST==203108.0,:]
 
 ###########################################################################
 # calcul des coordonnées sur toute la base Rendements
@@ -116,9 +122,10 @@ for i in range(len(liHistYield)) :
     df_analyse.loc[df_analyse["HY_col_"+temp]> max_col , ["HY_col_"+temp]]=0
     
     #df_analyse["HY_Rend_"+temp]=liHistYield_np[i][0][df_analyse["HY_row_"+temp]][df_analyse["HY_col_"+temp]]
-    df_analyse["HY_Rend_"+temp]=liHistYield_np[i][0][309][502]
+    coords_list = [(df_analyse["HY_row_"+temp][k], df_analyse["HY_col_"+temp][k]) for k in df_analyse.index]
+    df_analyse["HY_Rend_"+temp]= pd.DataFrame( [liHistYield_np[i][0][coords] for coords in coords_list],columns=["HY_Rend_"+temp])
 
-del max_row, max_col, temp, i
+del max_row, max_col, temp, i, coords_list
 
 # somme des rendements par annee, prod pour chaque ménage
 for an in range(len(list_annee_HY)) :
@@ -151,6 +158,12 @@ for prod in range(len(list_prod_HY)) :
 
 del prod
 
+# affichage des résultats
+list = [col for col in df_analyse.columns if col.startswith('HY_Rend_tot_')]
+a=df_analyse[list]
+
+del a, list
+
 ###########################################################################
 # calcul des coordonnées sur toute la base taux de rendement
 
@@ -168,9 +181,11 @@ for i in range(len(liCropMask)) :
     df_analyse.loc[df_analyse["CM_col_"+temp]> max_col , ["CM_col_"+temp]]=0
     
     #df_analyse["CM_Rend_"+temp]=liCropMask_np[i][0][df_analyse["CM_row_"+temp]][df_analyse["CM_col_"+temp]]
-    df_analyse["CM_Rend_"+temp]=liCropMask_np[i][0][309][502]
+    #df_analyse["CM_Rend_"+temp]=liCropMask_np[i][0][309][502]
+    coords_list = [(df_analyse["CM_row_"+temp][k], df_analyse["CM_col_"+temp][k]) for k in df_analyse.index]
+    df_analyse["CM_Rend_"+temp]= pd.DataFrame( [liCropMask_np[i][0][coords] for coords in coords_list],columns=["CM_Rend_"+temp])
    
-del max_row, max_col, temp, i
+del max_row, max_col, temp, i, coords_list
 
 # somme des rendements par annee, prod pour chaque ménage
 for an in range(len(list_annee_CM)) :
