@@ -487,7 +487,7 @@ df_final2.loc[df_final2.loc[:,'FCS']<=42,'FCS_BIN']= 1
 # Selection de colonnes
 df_analyse=df_final2[df_final2.LATITUDE.notna()]
 df_analyse=df_analyse[['FCS','FCS_BIN','LATITUDE','LONGITUDE','IDENT','NOMVILLAGE','CODREG',
-                      'MOUGHATAA','COMMUNE','FICHIER','QUEST']]
+                      'MOUGHATAA','COMMUNE','FICHIER','QUEST','NUMQUEST']]
 
 '''
 List_drop=['OPERAT','QUEST','IDENT','NUMEN','DATE_JOUR','DATE_MOIS','DATE_ANN_E',
