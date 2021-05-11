@@ -94,9 +94,22 @@ df_CropMask["CATE"]=df_CropMask["annee"].astype(str)+"_"+df_CropMask["prod"]+"_"
 
 del List_drop
 
+###########################################################################
+# remplacer par 0
 
+for i in range(len(liHistYield_np)) : 
+    a = np.min(liHistYield_np[i][0])
+    mask = (liHistYield_np[i][0] == a)
+    liHistYield_np[i][0][mask] = 0
 
+del a, mask, i
 
+for i in range(len(liCropMask_np)) : 
+    a = np.min(liCropMask_np[i][0])
+    mask = (liCropMask_np[i][0] == a)
+    liCropMask_np[i][0][mask] = 0
+
+del a, mask, i
 
 ###########################################################################
 # chargement de la base des ménages
@@ -168,7 +181,7 @@ del an, prod, nom, list
 # affichage des résultats
 list = [col for col in df_analyse.columns if col.startswith('HY_Rend_som_')]
 a=df_analyse[list]
-df_analyse["es"]=""
+
 del a, list
 
 # somme des rendements par prod pour chaque ménage en fonction de la date
@@ -254,8 +267,3 @@ list = [col for col in df_analyse.columns if col.startswith('CM_Rend_tot_')]
 a=df_analyse[list]
 
 del a, list
-
-###########################################################################
-
-
-
