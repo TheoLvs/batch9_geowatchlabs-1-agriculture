@@ -69,7 +69,6 @@ for path, subdirs, files in os.walk(monRep):
             liCropMask.append([annee,prod,path,name,rast_rend,rast_rend.height,rast_rend.width])
             liCropMask_np.append([rast_rend.read(1)])
 
-
 monRep=r'C:\0 - Data\fusion\Historical Yields'
 liHistYield = []
 liHistYield_np = []
@@ -135,7 +134,7 @@ for i in range(len(liCropMask_np)) :
 #liHYCM_np[4][0][(310, 1700)]
 
 ###########################################################################
-# chargement de la base des ménages
+# chargement de la base des ménages : 
 
 #liste=[203108.0,31113.0,100101.0,100114.0,100103.0,203613.0,100115.0,203614.0,
 #      203601.0,10610.0,100113.0,203605.0,31103.0,31105.0,203612.0,100102.0,31008.0,
@@ -145,63 +144,89 @@ for i in range(len(liCropMask_np)) :
 #df_analyse=fs.df_analyse.loc[fs.df_analyse.NUMQUEST.isin(liste),:]
 
 df_analyse=fs.df_analyse
+df_moughataa=fs.df_moughataa
 
 ###########################################################################
 # calcul des rendements par annee et prod pour chaque ménage 
 
-pixel=3 # Nb pixels autour du menage
-for i in range(len(liHYCM)) :
-    temp=liHYCM[i][0]+"_"+liHYCM[i][1] # annee + prod + zone
-    df_analyse["HY_row_"+temp],df_analyse["HY_col_"+temp] = liHYCM[0][4].index(pd.to_numeric(df_analyse["LONGITUDE"], errors='coerce'), 
-                              pd.to_numeric(df_analyse["LATITUDE"], errors='coerce'))
-    max_row=liHYCM[i][5]
-    max_col=liHYCM[i][6]
-    df_analyse.loc[:,"HY_Rdm_"+temp] = Calcul_Rend(pixel,liHYCM_np[i],df_analyse["HY_row_"+temp],df_analyse["HY_col_"+temp],df_analyse,max_row,max_col)
+def Calcul_Rend_df(df_analyse,LATITUDE,LONGITUDE,pixel) :
+    # Nb pixels autour du menage
+    for i in range(len(liHYCM)) :
+        temp=liHYCM[i][0]+"_"+liHYCM[i][1] # annee + prod + zone
+        df_analyse["HY_row_"+temp],df_analyse["HY_col_"+temp] = liHYCM[0][4].index(pd.to_numeric(df_analyse[LONGITUDE], errors='coerce'), 
+                                  pd.to_numeric(df_analyse[LATITUDE], errors='coerce'))
+        max_row=liHYCM[i][5]
+        max_col=liHYCM[i][6]
+        df_analyse.loc[:,"HY_Rdm_"+temp] = Calcul_Rend(pixel,liHYCM_np[i],df_analyse["HY_row_"+temp],df_analyse["HY_col_"+temp],df_analyse,max_row,max_col)
+    
+    #liHistYield_np[6][0][(310, 1700)]
+    
+    del max_row, max_col, temp, i, pixel #, coords_list, rent_list
+    
+    ###########################################################################
+    # calcul de la somme des rendements
+    # HistYield
+    
+    df_analyse["HY_Rend_tot_cowpea"]=0
+    df_analyse["HY_Rend_tot_groundnut"]=0
+    df_analyse["HY_Rend_tot_maize"]=0
+    df_analyse["HY_Rend_tot_millet"]=0
+    df_analyse["HY_Rend_tot_sorghum"]=0
+    
+    for prod in range(len(list_prod_HY)) :
+        df_analyse.loc[df_analyse["FICHIER"]=="June-11",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2010_"+list_prod_HY[prod]] 
+        df_analyse.loc[df_analyse["FICHIER"]=="June-12",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2011_"+list_prod_HY[prod]] 
+        df_analyse.loc[df_analyse["FICHIER"]=="June-13",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2012_"+list_prod_HY[prod]] 
+        df_analyse.loc[df_analyse["FICHIER"]=="June-14",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2013_"+list_prod_HY[prod]] 
+        df_analyse.loc[df_analyse["FICHIER"]=="June-15",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2014_"+list_prod_HY[prod]] 
+    
+    del prod
+    
+    df_analyse["HY_Rend_tot"]=df_analyse["HY_Rend_tot_cowpea"]+df_analyse["HY_Rend_tot_groundnut"]+df_analyse["HY_Rend_tot_maize"]+df_analyse["HY_Rend_tot_millet"]+df_analyse["HY_Rend_tot_sorghum"]
+    
+    ###########################################################################
+    # Variables à supprimer
+    list = [col for col in df_analyse.columns if col.startswith('HY_col')]
+    df_analyse=df_analyse.drop(list,axis=1)
+    list = [col for col in df_analyse.columns if col.startswith('HY_row')]
+    df_analyse=df_analyse.drop(list,axis=1)
+    list = [col for col in df_analyse.columns if col.startswith('HY_Rdm')]
+    df_analyse=df_analyse.drop(list,axis=1)
+    
+    return df_analyse
 
-#liHistYield_np[6][0][(310, 1700)]
-
-del max_row, max_col, temp, i, pixel #, coords_list, rent_list
+df_analyse=Calcul_Rend_df(df_analyse,"LATITUDE","LONGITUDE",3)
+df_moughataa=Calcul_Rend_df(df_moughataa,"Lat_MOUGHATAA","Long_MOUGHATAA",5)
 
 ###########################################################################
-# calcul de la somme des rendements
-# HistYield
+# Suppression des menages hors cartes de rendement
+longmin, latmin = liHistYield[0][4].xy(0, 0)
+longmax, latmax = liHistYield[0][4].xy(liHistYield[0][5], liHistYield[0][6])
 
-df_analyse["HY_Rend_tot_cowpea"]=0
-df_analyse["HY_Rend_tot_groundnut"]=0
-df_analyse["HY_Rend_tot_maize"]=0
-df_analyse["HY_Rend_tot_millet"]=0
-df_analyse["HY_Rend_tot_sorghum"]=0
+df_analyse=df_analyse.loc[df_analyse["LATITUDE"].astype(float)<latmin]
+df_analyse=df_analyse.loc[df_analyse["LATITUDE"].astype(float)>latmax]
 
-for prod in range(len(list_prod_HY)) :
-    df_analyse.loc[df_analyse["FICHIER"]=="June-11",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2010_"+list_prod_HY[prod]] 
-    df_analyse.loc[df_analyse["FICHIER"]=="June-12",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2011_"+list_prod_HY[prod]] 
-    df_analyse.loc[df_analyse["FICHIER"]=="June-13",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2012_"+list_prod_HY[prod]] 
-    df_analyse.loc[df_analyse["FICHIER"]=="June-14",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2013_"+list_prod_HY[prod]] 
-    df_analyse.loc[df_analyse["FICHIER"]=="June-15",'HY_Rend_tot_'+list_prod_HY[prod]]= df_analyse["HY_Rdm_2014_"+list_prod_HY[prod]] 
-
-del prod
-
-df_analyse["HY_Rend_tot"]=df_analyse["HY_Rend_tot_cowpea"]+df_analyse["HY_Rend_tot_groundnut"]+df_analyse["HY_Rend_tot_maize"]+df_analyse["HY_Rend_tot_millet"]+df_analyse["HY_Rend_tot_sorghum"]
+df_analyse=df_analyse.loc[df_analyse["LONGITUDE"].astype(float)>longmin]
+df_analyse=df_analyse.loc[df_analyse["LONGITUDE"].astype(float)<longmax]
 
 ###########################################################################
 # Estimation des rendements
+
 temp=df_analyse.loc[df_analyse["HY_Rend_tot"]>0]
+Liste=['YEAR','HY_Rend_tot']
+temp = temp[Liste].set_index('YEAR').notna().sum(level=0)
 temp2=df_analyse["HY_Rend_tot"].loc[df_analyse["HY_Rend_tot"]>0].mean()
 
-###########################################################################
-# correlation brute entre rendements et score
-df_corr = temp.loc[:,['HY_Rend_tot','FCS']] 
-df_corr = df_corr.corr()
 
-###########################################################################
-# Variables à supprimer
-list = [col for col in df_analyse.columns if col.startswith('HY_col')]
-df_analyse=df_analyse.drop(list,axis=1)
-list = [col for col in df_analyse.columns if col.startswith('HY_row')]
-df_analyse=df_analyse.drop(list,axis=1)
-list = [col for col in df_analyse.columns if col.startswith('HY_Rdm')]
-df_analyse=df_analyse.drop(list,axis=1)
+temp_mou=df_moughataa.loc[df_moughataa["HY_Rend_tot"]>0]
+Liste=['YEAR','HY_Rend_tot']
+temp_mou = temp_mou[Liste].set_index('YEAR').notna().sum(level=0)
+temp2_mou=df_moughataa["HY_Rend_tot"].loc[df_moughataa["HY_Rend_tot"]>0].mean()
 
+############################################################################
+# Export des données en csv
+df_analyse.to_csv('C:/0 - Data/df_analyse_tiff.csv', sep = ';')
+df_moughataa.to_csv('C:/0 - Data/df_moughataa_tiff.csv', sep = ';')
 
 
 
