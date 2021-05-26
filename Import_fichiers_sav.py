@@ -499,7 +499,7 @@ df_final.loc[df_final.loc[:,'FCS']<=42,'FCS_BIN']= 1
 
 ############################################################################
 # Ajout Latitude et longitude par MOUGHATAA sur toute la base
-
+'''
 df_final['Lat_MOUGHATAA']=df_final['MOUGHATAA']
 df_final['Long_MOUGHATAA']=df_final['MOUGHATAA']
 
@@ -508,67 +508,65 @@ dict_Long_MOUGHATAA = {11.0: -6.9895153, 12.0: -5.9488454, 13.0: -8.6657412, 14.
 
 df_final.loc[:,'Lat_MOUGHATAA'] = df_final['Lat_MOUGHATAA'].map(dict_Lat_MOUGHATAA)
 df_final.loc[:,'Long_MOUGHATAA'] = df_final['Long_MOUGHATAA'].map(dict_Long_MOUGHATAA)
+'''
+
+
+############################################################################
+# Ajout des lat / long manquantes - Prog Gpe 3
+
+df_final["LATITUDE_NUM"]=pd.to_numeric(df_final["LATITUDE"], errors='coerce')
+df_final["LONGITUDE_NUM"]=pd.to_numeric(df_final["LONGITUDE"], errors='coerce')
+df_final["ALTITUDE_NUM"]=pd.to_numeric(df_final["ALTITUDE"], errors='coerce')
+
+# Calcul des lat/long par commune
+commune_geo_table = pd.DataFrame(df_final[["COMMUNE", "LATITUDE_NUM", "LONGITUDE_NUM", "ALTITUDE_NUM"]].groupby(by=["COMMUNE"]).mean()).reset_index()
+moughataa_geo_table = pd.DataFrame(df_final[["MOUGHATAA", "LATITUDE_NUM", "LONGITUDE_NUM", "ALTITUDE_NUM"]].groupby(by=["MOUGHATAA"]).mean()).reset_index()
+moughataas_communes = (df_final[["COMMUNE", "MOUGHATAA"]].drop_duplicates().set_index("COMMUNE"))
+moughataas_communes_match_dict = moughataas_communes.to_dict()["MOUGHATAA"]
+commune_geo_table["MOUGHATAA"] = commune_geo_table["COMMUNE"].apply(lambda row: moughataas_communes_match_dict[row])
+commune_geo_table = commune_geo_table.merge(moughataa_geo_table, on="MOUGHATAA", how="left", suffixes=("", "_MOUGHATAA"))
+commune_geo_table["LATITUDE_NUM"] = commune_geo_table["LATITUDE_NUM"].fillna(commune_geo_table["LATITUDE_NUM_MOUGHATAA"])
+commune_geo_table["LONGITUDE_NUM"] = commune_geo_table["LONGITUDE_NUM"].fillna(commune_geo_table["LONGITUDE_NUM_MOUGHATAA"])
+commune_geo_table["ALTITUDE_NUM"] = commune_geo_table["ALTITUDE_NUM"].fillna(commune_geo_table["ALTITUDE_NUM_MOUGHATAA"])
+commune_geo_table = commune_geo_table.drop(columns=["LATITUDE_NUM_MOUGHATAA", "LONGITUDE_NUM_MOUGHATAA", "ALTITUDE_NUM_MOUGHATAA"])
+
+# Fusion des lat/long par commune et base des menages
+df_final = df_final.merge(commune_geo_table, how="left", on="COMMUNE", suffixes=("", "_GEOMATCH"))
+
+# Traitement des lat/long manquantes
+df_final["LATITUDE_NUM"] = df_final["LATITUDE_NUM"].fillna(df_final["LATITUDE_NUM_GEOMATCH"])
+df_final["LONGITUDE_NUM"] = df_final["LONGITUDE_NUM"].fillna(df_final["LONGITUDE_NUM_GEOMATCH"])
+df_final["ALTITUDE_NUM"] = df_final["ALTITUDE_NUM"].fillna(df_final["ALTITUDE_NUM_GEOMATCH"])
+
+df_final["LATITUDE"] = df_final["LATITUDE"].fillna(df_final["LATITUDE_NUM_GEOMATCH"].astype(str))
+df_final["LONGITUDE"] = df_final["LONGITUDE"].fillna(df_final["LONGITUDE_NUM_GEOMATCH"].astype(str))
+df_final["ALTITUDE"] = df_final["ALTITUDE"].fillna(df_final["ALTITUDE_NUM_GEOMATCH"].astype(str))
+
+df_final = df_final.drop(columns=["LATITUDE_NUM_GEOMATCH", "LONGITUDE_NUM_GEOMATCH", "ALTITUDE_NUM_GEOMATCH",
+                                  "LATITUDE_NUM","LONGITUDE_NUM","ALTITUDE_NUM"])
+
 
 ############################################################################
 # Suppression de colonnes
 List_drop=['OPERAT','CP','NUMEN','DATE_JOUR','DATE_MOIS','DATE_ANN_E','CODE_ENQ','CODE_CONT','AG_SAISIE','JOUR_SAISIE','MOIS_SAISIE','ANNEE_SAISIE','OBSERV$1','OBSERV$2','OBSERV$3','OBSERV$4','TAIL_CALC','TXDEP','Q3_1','Q3_2','Q3_3','Q3_4','Q3_5','Q3_6','Q3_7','Q3_8','Q3_9','Q3_10','Q3_11','Q3_12','Q3_13','Q3_14','Q3_15','PROD_LAIT1','VENT_LAIT1','PRODAGRI','VERIF','PRODUITS$01','PRODUITS$02','PRODUITS$03','PRODUITS$04','PRODUITS$05','PRODUITS$06','PRODUITS$07','PRODUITS$08','PRODUITS$09','PRODUITS$10','PRODUITS$11','PRODUITS$12','PRODUITS$13','PRODUITS$14','PRODUITS$15','NBCONSO$01','NBCONSO$02','NBCONSO$03','NBCONSO$04','NBCONSO$05','NBCONSO$06','NBCONSO$07','NBCONSO$08','NBCONSO$09','NBCONSO$10','NBCONSO$11','NBCONSO$12','NBCONSO$13','NBCONSO$14','NBCONSO$15','ACQUISIT$01','ACQUISIT$02','ACQUISIT$03','ACQUISIT$04','ACQUISIT$05','ACQUISIT$06','ACQUISIT$07','ACQUISIT$08','ACQUISIT$09','ACQUISIT$10','ACQUISIT$11','ACQUISIT$12','ACQUISIT$13','ACQUISIT$14','ACQUISIT$15','Q11_12','Q11_13','Q11_14','DATSAISIE','HDEB','HFIN','FAC1_1','FAC2_1','NFAC1_1','FAC1_2','FAC2_2','FAC3_2','NTI001','FAC1_3','FAC2_3','NTI002','FAC1_4','FAC2_4','NTI003','BLE_SR1','BLE_SR2','BLE_SR3','BLE_SR4','BLE_SR5','BLE_SR6','BLE_SR7','BLE_SR8','BLE_SR9','BLE_SR10','RIZ_SR1','RIZ_SR2','RIZ_SR3','RIZ_SR4','RIZ_SR5','RIZ_SR6','RIZ_SR7','RIZ_SR8','RIZ_SR9','RIZ_SR10','MIL_SR1','MIL_SR2','MIL_SR3','MIL_SR4','MIL_SR5','MIL_SR6','MIL_SR7','MIL_SR8','MIL_SR9','MIL_SR10','PATES_SR1','PATES_SR2','PATES_SR3','PATES_SR4','PATES_SR5','PATES_SR6','PATES_SR7','PATES_SR8','PATES_SR9','PATES_SR10','PAIN_SR1','PAIN_SR2','PAIN_SR3','PAIN_SR4','PAIN_SR5','PAIN_SR6','PAIN_SR7','PAIN_SR8','PAIN_SR9','PAIN_SR10','TUBERCULES_SR1','TUBERCULES_SR2','TUBERCULES_SR3','TUBERCULES_SR4','TUBERCULES_SR5','TUBERCULES_SR6','TUBERCULES_SR7','TUBERCULES_SR8','TUBERCULES_SR9','TUBERCULES_SR10','LEGUMINEUSES_SR1','LEGUMINEUSES_SR2','LEGUMINEUSES_SR3','LEGUMINEUSES_SR4','LEGUMINEUSES_SR5','LEGUMINEUSES_SR6','LEGUMINEUSES_SR7','LEGUMINEUSES_SR8','LEGUMINEUSES_SR9','LEGUMINEUSES_SR10','LEGUMES_SR1','LEGUMES_SR2','LEGUMES_SR3','LEGUMES_SR4','LEGUMES_SR5','LEGUMES_SR6','LEGUMES_SR7','LEGUMES_SR8','LEGUMES_SR9','LEGUMES_SR10','FRUITS_SR1','FRUITS_SR2','FRUITS_SR3','FRUITS_SR4','FRUITS_SR5','FRUITS_SR6','FRUITS_SR7','FRUITS_SR8','FRUITS_SR9','FRUITS_SR10','VIANDE_SR1','VIANDE_SR2','VIANDE_SR3','VIANDE_SR4','VIANDE_SR5','VIANDE_SR6','VIANDE_SR7','VIANDE_SR8','VIANDE_SR9','VIANDE_SR10','POISSON_SR1','POISSON_SR2','POISSON_SR3','POISSON_SR4','POISSON_SR5','POISSON_SR6','POISSON_SR7','POISSON_SR8','POISSON_SR9','POISSON_SR10','LAITIERS_SR1','LAITIERS_SR2','LAITIERS_SR3','LAITIERS_SR4','LAITIERS_SR5','LAITIERS_SR6','LAITIERS_SR7','LAITIERS_SR8','LAITIERS_SR9','LAITIERS_SR10','SUCRE_SR1','SUCRE_SR2','SUCRE_SR3','SUCRE_SR4','SUCRE_SR5','SUCRE_SR6','SUCRE_SR7','SUCRE_SR8','SUCRE_SR9','SUCRE_SR10','HUILE_SR1','HUILE_SR2','HUILE_SR3','HUILE_SR4','HUILE_SR5','HUILE_SR6','HUILE_SR7','HUILE_SR8','HUILE_SR9','HUILE_SR10','CONDIMENTS_SR1','CONDIMENTS_SR2','CONDIMENTS_SR3','CONDIMENTS_SR4','CONDIMENTS_SR5','CONDIMENTS_SR6','CONDIMENTS_SR7','CONDIMENTS_SR8','CONDIMENTS_SR9','CONDIMENTS_SR10','SOURCE1','SOURCE2','SOURCE3','SOURCE4','SOURCE5','SOURCE6','SOURCE7','SOURCE8','SOURCE9','SOURCE10','PER.SOURCE10','ID02','RECODR','NUMORD','CLUSTER','SAISIE','CLUSTER2','SELECT','NUMDR','COLDATE','DATECOL','CODE_CE','DATE','OBS$1','OBS$2','OBS$3','Q4_9','Q4_10','Q6_5$1','Q6_5$2','Q6_5$3','Q7_2$1','Q7_2$2','Q8_17','Q8_18OT$1','Q8_18OT$2','Q8_18OT$3','Q8_18$1','Q8_18$2','Q8_18$3','Q8_19$1','Q8_19$2','PRODUITS$16','NBCONSO$16','ACQUISIT$16','DATCOL','EVO_BOV','EVO_OV','EVO_CAP','EVO_CAM','FILTER_$','SUM_CEREALES1','ACT1_A1','ACT1_A2','ACT1_A3','ACT1_A4','ACT1_A5','ACT1_A6','ACT1_A7','ACT1_A8','ACT1_A9','ACT1_A10','ACT1_A11','ACT1_A12','ACT1_A13','ACT1_A14','ACT1_A15','ACT1_A16','ACT1_A17','ACT1_A18','ACT1_A19','ACT1_A20','ACT1_A21','ACT1_A22','ACT1_A23','ACT1_A24','ACT1_A25','ACT1_A26','ACT2_A1','ACT2_A2','ACT2_A3','ACT2_A4','ACT2_A5','ACT2_A6','ACT2_A7','ACT2_A8','ACT2_A9','ACT2_A10','ACT2_A11','ACT2_A12','ACT2_A13','ACT2_A14','ACT2_A15','ACT2_A16','ACT2_A17','ACT2_A18','ACT2_A19','ACT2_A20','ACT2_A21','ACT2_A22','ACT2_A23','ACT2_A24','ACT2_A25','ACT2_A26','ACT3_A1','ACT3_A2','ACT3_A3','ACT3_A4','ACT3_A5','ACT3_A6','ACT3_A7','ACT3_A8','ACT3_A9','ACT3_A10','ACT3_A11','ACT3_A12','ACT3_A13','ACT3_A14','ACT3_A15','ACT3_A16','ACT3_A17','ACT3_A18','ACT3_A19','ACT3_A20','ACT3_A21','ACT3_A22','ACT3_A23','ACT3_A24','ACT3_A25','ACT3_A26','ACTOT1A','ACTOT2A','ACTOT3A','ACTOT4A','ACTOT5A','ACTOT6A','ACTOT7','ACTOT8A','ACTOT9A','ACTOT10A','ACTOT11A','ACTOT12A','ACTOT13A','ACTOT14A','ACTOT15','ACTOT16A','ACTOT17A','ACTOT18A','ACTOT19A','ACTOT20A','ACTOT21A','ACTOT22A','ACTOT23A','ACTOT24A','ACTOT25','ACTOT26A','ACTIVITE1','ACTIVITE2','ACTIVITE3','ACTIVITE4','ACTIVITE5','ACTIVITE6','ACTIVITE7','ACTIVITE8','ACTIVITE9','ACTIVITE10','ACTIVITE11','NCSI','COND_SR1','COND_SR2','COND_SR3','COND_SR4','COND_SR5','COND_SR6','COND_SR7','COND_SR8','COND_SR9','COND_SR10','OTH_SR1','OTH_SR2','OTH_SR3','OTH_SR4','OTH_SR5','OTH_SR6','OTH_SR7','OTH_SR8','OTH_SR9','OTH_SR10','SECTION1','NORDRE','TODAY','SUBMISSIONDATE','SUBSCRIBERID','CODEKIP','ACCORD','SECTION2','SECTION4','VARIZ1','VARIZ2','VARIZ3','VARIZ4','SECTION5','Q5_0C','VERIF2','VERIF3','VERIF4','VERIF5','VERIF6','Q5_6','Q5_7','SECTION6','Q6_5','SECTION7','SECTION8','VER_ADBASE1','VER_ADBASE2','VER_PULSES','VER_LEGUMES','VER_FRUIT','VER_PROTSMALL_N','VER_PROTSMALL','S_VIAND_POISS_N','D_VIAND_POISS_N','VER_VIANDPOISS_N','VER_VIANDPOISS','SMALLAI_N','S_SMALLAI_N','VER_SMALLAI_N','VER_SMALLAI','D_LAITIERS_N','VER_LAITIERS_N','VER_LAITIERS','VER_SUCRE','VER_HUILE','VER_OTHER','SECTION9','CHOCS1GENERATED_TABLE_LIST_LABEL_301','CHOCS1RESERVED_NAME_FOR_FIELD_LIST_LABELS_302','CHOCS2GENERATED_TABLE_LIST_LABEL_311','CHOCS2RESERVED_NAME_FOR_FIELD_LIST_LABELS_312','SECTION10','STRATEG1GENERATED_TABLE_LIST_LABEL_322','STRATNAL1GENERATED_TABLE_LIST_LABEL_329','STRATNAL1RESERVED_NAME_FOR_FIELD_LIST_LABELS_330','STRATNAL2GENERATED_TABLE_LIST_LABEL_340','STRATNAL2RESERVED_NAME_FOR_FIELD_LIST_LABELS_341','CSI_BRUT','SECTION11','Q11AGENERATED_TABLE_LIST_LABEL_353','Q11ARESERVED_NAME_FOR_FIELD_LIST_LABELS_354','Q11BGENERATED_TABLE_LIST_LABEL_361','Q11BRESERVED_NAME_FOR_FIELD_LIST_LABELS_362','METAINSTANCEID','KEY','Q6_51','Q6_52','Q6_53','TXDEP1','TXDEP2','MIGRATOR','PROD_LAIT13A','TAUXACTIV1','TAUXACTIV2','DIV_CEREAL','DIV_TUBER','DIV_LEGUMINEUSE','DIV_VEGETABLE','DIV_FRUITS','DIV_VIANDE_POISSON','DIV_LAIT','DIV_HUILE','DIV_SUCRE','DIV_CONDIMENT','COPING7','COPING8','COPING9','COPING10','COPING11','COPING12','COPING13','COPING14','COPING15','COPING16','COPING17','COPING18','COPING19','COPING20','COPING21','COPING22','COPING23','COPING24','CLASS_PCDEPALIM','COPING_CAPA','CLASS_FS','FS_CLASSIF','FRUITS1','LEGUMES1','HUILE1','SUCRE1','ADBASE1_SR1','ADBASE1_SR2','ADBASE1_SR3','ADBASE1_SR4','ADBASE1_SR5','ADBASE1_SR6','ADBASE1_SR7','ADBASE1_SR8','ADBASE1_SR9','ADBASE2_SR1','ADBASE2_SR2','ADBASE2_SR3','ADBASE2_SR4','ADBASE2_SR5','ADBASE2_SR6','ADBASE2_SR7','ADBASE2_SR8','ADBASE2_SR9','PULSES_SR1','PULSES_SR2','PULSES_SR3','PULSES_SR4','PULSES_SR5','PULSES_SR6','PULSES_SR7','PULSES_SR8','PULSES_SR9','PROTEISMALL_SR1','PROTEISMALL_SR2','PROTEISMALL_SR3','PROTEISMALL_SR4','PROTEISMALL_SR5','PROTEISMALL_SR6','PROTEISMALL_SR7','PROTEISMALL_SR8','PROTEISMALL_SR9','VIAND_POISS_SR1','VIAND_POISS_SR2','VIAND_POISS_SR3','VIAND_POISS_SR4','VIAND_POISS_SR5','VIAND_POISS_SR6','VIAND_POISS_SR7','VIAND_POISS_SR8','VIAND_POISS_SR9','SMALLAI_SR1','SMALLAI_SR2','SMALLAI_SR3','SMALLAI_SR4','SMALLAI_SR5','SMALLAI_SR6','SMALLAI_SR7','SMALLAI_SR8','SMALLAI_SR9','OTHER_SR1','OTHER_SR2','OTHER_SR3','OTHER_SR4','OTHER_SR5','OTHER_SR6','OTHER_SR7','OTHER_SR8','OTHER_SR9','HNO','PRGNUT','START','END','DEVICEID','FSMS_JUIN14','INTRO','ENDINTER','ZD','FID_LZ2013','LZCODE','ALHZ','LHZA','LHZ2','ENKET','INTRO8','CHOCS1GENERATED_TABLE_LIST_LABEL_307','CHOCS1RESERVED_NAME_FOR_FIELD_LIST_LABELS_308','CHOCS2GENERATED_TABLE_LIST_LABEL_317','CHOCS2RESERVED_NAME_FOR_FIELD_LIST_LABELS_318','INTRO9','STRATEG1GENERATED_TABLE_LIST_LABEL_330','STRATNAL1GENERATED_TABLE_LIST_LABEL_337','STRATNAL1RESERVED_NAME_FOR_FIELD_LIST_LABELS_338','Q11AGENERATED_TABLE_LIST_LABEL_361','Q11ARESERVED_NAME_FOR_FIELD_LIST_LABELS_362','PROD_LAIT14A','VENT_LAIT14','ACTOT1','ACTOT2','ACTOT3','ACTOT4','ACTOT5','ACTOT6','ACTOT8','ACTOT9','ACTOT10','ACTOT11','ACTOT12','ACTOT13','ACTOT14','ACTOT16','NTI004','NTI005','NTI006','VULNECO','NTI007','NORDO','DUREE','DUREE2','FSMS_MAI15','Q5_0B1','Q6_5A','Q6_5B','Q6_6C','Q7_17','SECTION8BIS','FIES1','FIES2','FIES3','FIES4','FIES5','FIES6','FIES7','FIES7A','FIES8','FIES8A','SECTIONXX','CSI_HNO','CSI_HNO1']
 df_final=df_final.drop(List_drop,axis=1)
 
-
-
-############################################################################
-# Ajout Lat Long Gpe3
-
-df_lat_long = pd.read_csv("C:/0 - Data/standardized_aggregated_dataset.csv")
-df_lat_long["latlong_id"]=df_lat_long["numquest"].astype(str)+df_lat_long["ident"].astype(str)+df_lat_long["year"].astype(str)+df_lat_long["month"].astype(str)+df_lat_long["commune"]
-
-df_lat_long=df_lat_long[['latlong_id','latitude','longitude','numquest','year','month']]
-df_lat_long=df_lat_long.rename(columns = {'latitude': 'Lat_Gpe3', 'longitude': 'Long_Gpe3'})
-
-df_final["latlong_id"]=df_final["NUMQUEST"].astype(str)+df_final["IDENT"].astype(str)+df_final["YEAR"].astype(str)+df_final["MONTH"].astype(str)+df_final["COMMUNE"].astype(str)
-
-df_final = pd.merge(df_final, df_lat_long, how="left", on=["latlong_id"])
-
-'''
-temp = pd.merge(df_lat_long, df_final, how="left", on=["latlong_id"])
-temp=temp[temp.PONDERATION.isna()]
-temp=temp[temp.month_x=="Juin"]
-
-temp=temp[temp.month_x=="Juin"]
-'''
-
-# Calcul des valeurs manquantes
-Liste=['YEAR','LATITUDE','LONGITUDE','Lat_Gpe3','Long_Gpe3','Lat_MOUGHATAA','Long_MOUGHATAA']
-temp = df_final[Liste].set_index('YEAR').isna().sum(level=0)
-
-############################################################################
-# Ajout Latitude et longitude de la MOUGHATAA pour les questionnaires q4 et q7 sans lat ni long
-
-df_final.loc[df_final.loc[:,'QUEST']=="Q4",'LATITUDE']= df_final['Lat_Gpe3']
-df_final.loc[df_final.loc[:,'QUEST']=="Q4",'LONGITUDE']= df_final['Long_Gpe3']
-
-df_final.loc[df_final.loc[:,'QUEST']=="Q7",'LATITUDE']= df_final['Lat_Gpe3']
-df_final.loc[df_final.loc[:,'QUEST']=="Q7",'LONGITUDE']= df_final['Long_Gpe3']
-
-############################################################################
-# Suppression de colonnes
-List_drop=['Lat_Gpe3','Long_Gpe3']
-df_final=df_final.drop(List_drop,axis=1)
-
 ############################################################################
 # Creation tables finales
-df_analyse=df_final[df_final.LATITUDE.notna()]
-df_moughataa=df_final[df_final.Lat_MOUGHATAA.notna()]
+df_analyse=df_final[df_final["LATITUDE"]!="nan"]
 
 ############################################################################
 # Export des données en csv
 questtot.to_csv('C:/0 - Data/EntetesQuest.csv', sep = ';')
 df_analyse.to_csv('C:/0 - Data/df_analyse_sav.csv', sep = ';')
-df_moughataa.to_csv('C:/0 - Data/df_moughataa_sav.csv', sep = ';')
+
 
 '''
 
 
+temp = pd.crosstab([df_final["COMMUNE"]],df_final["YEAR"], margins=True)
+
+temp = df_final.YEAR.value_counts()
 
 a=df_lat_long[['year','month']].value_counts()
 

@@ -144,10 +144,6 @@ for i in range(len(liCropMask_np)) :
 #df_analyse=fs.df_analyse.loc[fs.df_analyse.NUMQUEST.isin(liste),:]
 
 df_analyse=fs.df_analyse
-df_moughataa=fs.df_moughataa
-
-###########################################################################
-# calcul des rendements par annee et prod pour chaque ménage 
 
 def Calcul_Rend_df(df_analyse,LATITUDE,LONGITUDE,pixel) :
     # Nb pixels autour du menage
@@ -196,7 +192,6 @@ def Calcul_Rend_df(df_analyse,LATITUDE,LONGITUDE,pixel) :
     return df_analyse
 
 df_analyse=Calcul_Rend_df(df_analyse,"LATITUDE","LONGITUDE",3)
-df_moughataa=Calcul_Rend_df(df_moughataa,"Lat_MOUGHATAA","Long_MOUGHATAA",5)
 
 ###########################################################################
 # Suppression des menages hors cartes de rendement
@@ -217,16 +212,10 @@ Liste=['YEAR','HY_Rend_tot']
 temp = temp[Liste].set_index('YEAR').notna().sum(level=0)
 temp2=df_analyse["HY_Rend_tot"].loc[df_analyse["HY_Rend_tot"]>0].mean()
 
-
-temp_mou=df_moughataa.loc[df_moughataa["HY_Rend_tot"]>0]
-Liste=['YEAR','HY_Rend_tot']
-temp_mou = temp_mou[Liste].set_index('YEAR').notna().sum(level=0)
-temp2_mou=df_moughataa["HY_Rend_tot"].loc[df_moughataa["HY_Rend_tot"]>0].mean()
-
 ############################################################################
 # Export des données en csv
 df_analyse.to_csv('C:/0 - Data/df_analyse_tiff.csv', sep = ';')
-df_moughataa.to_csv('C:/0 - Data/df_moughataa_tiff.csv', sep = ';')
+
 
 
 
